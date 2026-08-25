@@ -1,0 +1,23 @@
+name: Swift Source Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate-source:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify Swift sources exist
+        run: |
+          test -f Camera05TesterApp.swift
+          test -f ContentView.swift
+          test -f CameraPreview.swift
+          test -f CameraTestResultView.swift
+          test -f UltraWideCameraManager.swift
+          echo "Camera05Tester source files are present."
