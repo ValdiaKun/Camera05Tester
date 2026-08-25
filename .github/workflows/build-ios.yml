@@ -1,0 +1,53 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild \
+            -project Camera05Tester.xcodeproj \
+            -scheme Camera05Tester \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Build unsigned device app
+        run: |
+          xcodebuild \
+            -project Camera05Tester.xcodeproj \
+            -scheme Camera05Tester \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package unsigned app
+        run: |
+          mkdir -p artifact
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -path '*Build/Products/Debug-iphoneos/Camera05Tester.app' -type d | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "App bundle not found"
+            exit 1
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" artifact/Camera05Tester-unsigned.app.zip
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Camera05Tester-unsigned
+          path: artifact/Camera05Tester-unsigned.app.zip
